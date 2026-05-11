@@ -9,11 +9,11 @@ class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(path: '/', icon: Icons.calculate_outlined, activeIcon: Icons.calculate, label: AppStrings.tabCalculator),
-    _TabItem(path: '/schedule', icon: Icons.table_rows_outlined, activeIcon: Icons.table_rows, label: AppStrings.tabSchedule),
-    _TabItem(path: '/compare', icon: Icons.compare_arrows_outlined, activeIcon: Icons.compare_arrows, label: AppStrings.tabCompare),
-    _TabItem(path: '/saved', icon: Icons.bookmark_outline, activeIcon: Icons.bookmark, label: AppStrings.tabSaved),
-    _TabItem(path: '/settings', icon: Icons.settings_outlined, activeIcon: Icons.settings, label: AppStrings.tabSettings),
+    _TabItem(path: '/',          icon: 'assets/icons/calculator.png', label: AppStrings.tabCalculator),
+    _TabItem(path: '/schedule',  icon: 'assets/icons/calendar.png',   label: AppStrings.tabSchedule),
+    _TabItem(path: '/compare',   icon: 'assets/icons/compare.png',    label: AppStrings.tabCompare),
+    _TabItem(path: '/saved',     icon: 'assets/icons/saved.png',      label: AppStrings.tabSaved),
+    _TabItem(path: '/settings',  icon: 'assets/icons/settings.png',   label: AppStrings.tabSettings),
   ];
 
   int _locationToIndex(String location) {
@@ -38,7 +38,7 @@ class MainShell extends StatelessWidget {
           border: Border(
             top: BorderSide(
               color: isDark ? AppColors.darkBorder : AppColors.neutral200,
-              width: 0.5, // iOS hairline border
+              width: 0.5,
             ),
           ),
         ),
@@ -52,13 +52,22 @@ class MainShell extends StatelessWidget {
             items: _tabs
                 .asMap()
                 .entries
-                .map(
-                  (e) => BottomNavigationBarItem(
-                    icon: Icon(e.value.icon, size: 22),
-                    activeIcon: Icon(e.value.activeIcon, size: 22),
+                .map((e) {
+                  final selected = e.key == currentIndex;
+                  final color = selected
+                      ? AppColors.brand700
+                      : (isDark ? AppColors.neutral400 : AppColors.neutral500);
+                  final iconWidget = Image.asset(
+                    e.value.icon,
+                    width: 24,
+                    height: 24,
+                    color: color,
+                  );
+                  return BottomNavigationBarItem(
+                    icon: iconWidget,
                     label: e.value.label,
-                  ),
-                )
+                  );
+                })
                 .toList(),
           ),
         ),
@@ -69,14 +78,12 @@ class MainShell extends StatelessWidget {
 
 class _TabItem {
   final String path;
-  final IconData icon;
-  final IconData activeIcon;
+  final String icon;
   final String label;
 
   const _TabItem({
     required this.path,
     required this.icon,
-    required this.activeIcon,
     required this.label,
   });
 }

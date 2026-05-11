@@ -5,6 +5,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/section_label.dart';
 import 'widgets/loan_summary_card.dart';
 import 'widgets/amortization_table.dart';
+import 'widgets/principal_interest_donut.dart';
+import 'widgets/balance_line_chart.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -93,31 +95,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               child: AmortizationTable(showMonthly: _showMonthly),
             ),
           ] else ...[
-            // Chart tab placeholder
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.chart_pie,
-                      size: 48,
-                      color:
-                          isDark ? AppColors.neutral500 : AppColors.neutral400,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+                children: const [
+                  SectionLabel(text: 'Payment Breakdown'),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: PrincipalInterestDonut(
+                      principalPercent: 45.1,
+                      loanAmount: '\$360,000',
+                      totalInterest: '\$438,347',
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Charts — Phase 2',
-                      style: TextStyle(
-                        fontFamily: 'DMSans',
-                        fontSize: 15,
-                        color: isDark
-                            ? AppColors.neutral500
-                            : AppColors.neutral400,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 20),
+                  SectionLabel(text: 'Balance Over Time'),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: BalanceLineChart(),
+                  ),
+                ],
               ),
             ),
           ],
