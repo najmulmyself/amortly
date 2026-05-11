@@ -49,12 +49,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           const SizedBox(height: 12),
 
           // Loan summary card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: LoanSummaryCard(
               loanAmount: '\$360,000',
               rate: '6.250%',
               term: '30 Years',
+              startDate: 'May 12, 2025',
               totalInterest: '\$438,347',
               totalCost: '\$798,347',
               payoffDate: 'May 2055',
@@ -101,7 +102,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     Icon(
                       CupertinoIcons.chart_pie,
                       size: 48,
-                      color: isDark ? AppColors.neutral500 : AppColors.neutral400,
+                      color:
+                          isDark ? AppColors.neutral500 : AppColors.neutral400,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -109,7 +111,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       style: TextStyle(
                         fontFamily: 'DMSans',
                         fontSize: 15,
-                        color: isDark ? AppColors.neutral500 : AppColors.neutral400,
+                        color: isDark
+                            ? AppColors.neutral500
+                            : AppColors.neutral400,
                       ),
                     ),
                   ],
@@ -130,7 +134,8 @@ class _ChipButton extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _ChipButton({required this.label, required this.selected, required this.onTap});
+  const _ChipButton(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -141,10 +146,14 @@ class _ChipButton extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.brand800 : (isDark ? AppColors.darkSurface : AppColors.white),
+          color: selected
+              ? AppColors.brand800
+              : (isDark ? AppColors.darkSurface : AppColors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.brand800 : (isDark ? AppColors.darkBorder : AppColors.neutral300),
+            color: selected
+                ? AppColors.brand800
+                : (isDark ? AppColors.darkBorder : AppColors.neutral300),
           ),
         ),
         child: Text(
@@ -153,7 +162,9 @@ class _ChipButton extends StatelessWidget {
             fontFamily: 'DMSans',
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: selected ? AppColors.white : (isDark ? AppColors.neutral300 : AppColors.neutral500),
+            color: selected
+                ? AppColors.white
+                : (isDark ? AppColors.neutral300 : AppColors.neutral500),
           ),
         ),
       ),
@@ -178,12 +189,13 @@ class _ExportButton extends StatelessWidget {
             color: isDark ? AppColors.darkBorder : AppColors.neutral300,
           ),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(CupertinoIcons.arrow_up_doc, size: 14, color: AppColors.brand800),
-            const SizedBox(width: 4),
-            const Text(
+            Icon(CupertinoIcons.arrow_up_doc,
+                size: 14, color: AppColors.brand800),
+            SizedBox(width: 4),
+            Text(
               'Export',
               style: TextStyle(
                 fontFamily: 'DMSans',

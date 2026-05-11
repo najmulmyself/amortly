@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
 
 class CompareHeaderCards extends StatelessWidget {
   final String loan1Label;
-  final String loan1Amount;
+  final String loan1TotalInterest;
   final String loan1Monthly;
   final String loan2Label;
-  final String loan2Amount;
+  final String loan2TotalInterest;
   final String loan2Monthly;
 
-  // Legacy params kept for backward compat (unused in new design)
+  // Legacy params kept for backward compat
+  final String loan1Amount;
+  final String loan2Amount;
   final String loan1Rate;
   final String loan1Term;
   final String loan2Rate;
@@ -18,16 +19,19 @@ class CompareHeaderCards extends StatelessWidget {
 
   const CompareHeaderCards({
     super.key,
-    this.loan1Label = 'Loan A',
-    required this.loan1Amount,
+    this.loan1Label = 'Without Extra',
+    this.loan1TotalInterest = '\$248,950',
+    required this.loan1Monthly,
+    this.loan2Label = 'With Extra',
+    this.loan2TotalInterest = '\$112,806',
+    required this.loan2Monthly,
+    // legacy
+    this.loan1Amount = '',
     this.loan1Rate = '',
     this.loan1Term = '',
-    required this.loan1Monthly,
-    this.loan2Label = 'Loan B',
-    required this.loan2Amount,
+    this.loan2Amount = '',
     this.loan2Rate = '',
     this.loan2Term = '',
-    required this.loan2Monthly,
   });
 
   @override
@@ -37,7 +41,7 @@ class CompareHeaderCards extends StatelessWidget {
         Expanded(
           child: _LoanCard(
             label: loan1Label,
-            extraLabel: loan1Amount,
+            totalInterest: loan1TotalInterest,
             monthly: loan1Monthly,
             isPrimary: false,
           ),
@@ -46,7 +50,7 @@ class CompareHeaderCards extends StatelessWidget {
         Expanded(
           child: _LoanCard(
             label: loan2Label,
-            extraLabel: loan2Amount,
+            totalInterest: loan2TotalInterest,
             monthly: loan2Monthly,
             isPrimary: true,
           ),
@@ -58,13 +62,13 @@ class CompareHeaderCards extends StatelessWidget {
 
 class _LoanCard extends StatelessWidget {
   final String label;
-  final String extraLabel;
+  final String totalInterest;
   final String monthly;
   final bool isPrimary;
 
   const _LoanCard({
     required this.label,
-    required this.extraLabel,
+    required this.totalInterest,
     required this.monthly,
     required this.isPrimary,
   });
@@ -75,15 +79,27 @@ class _LoanCard extends StatelessWidget {
     final bg = isPrimary
         ? AppColors.accent500
         : (isDark ? AppColors.darkSurface : AppColors.neutral100);
-    final labelColor = isPrimary ? AppColors.white : AppColors.neutral500;
-    final valueColor =
-        isPrimary ? AppColors.white : (isDark ? AppColors.white : AppColors.neutral900);
+    final labelColor = isPrimary
+        ? AppColors.white.withValues(alpha: 0.8)
+        : AppColors.neutral500;
+    final valueColor = isPrimary
+        ? AppColors.white
+        : (isDark ? AppColors.white : AppColors.neutral900);
+    final subColor = isPrimary
+        ? AppColors.white.withValues(alpha: 0.75)
+        : AppColors.neutral500;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
+        border: isPrimary
+            ? null
+            : Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.neutral200,
+                width: 0.5,
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,24 +111,36 @@ class _LoanCard extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: labelColor,
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            extraLabel,
+            totalInterest,
             style: TextStyle(
               fontFamily: 'DMSans',
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: valueColor,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            monthly,
-            style: AppTextStyles.cardSubtitle.copyWith(
-              color: isPrimary ? AppColors.white.withValues(alpha: 0.8) : AppColors.neutral500,
+            'Total Interest',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 11,
+              color: subColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$monthly / mo',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: subColor,
             ),
           ),
         ],

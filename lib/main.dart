@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_cubit.dart';
 import 'navigation/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await MobileAds.instance.initialize();
+
+  // Read saved theme before runApp so AppThemeCubit never emits during build,
+  // which would violate the debugFrameWasSentToEngine assertion.
+  final prefs = await SharedPreferences.getInstance();
+  final savedDark = prefs.getBool('dark_mode');
+  final initialTheme = savedDark == null
+      ? ThemeMode.system
+      : (savedDark ? ThemeMode.dark : ThemeMode.light);
+
   // TODO(storage): await Hive.initFlutter() when storage layer is wired
-  // TODO(ads): await MobileAds.instance.initialize() before AdMob go-live
   // TODO(att): AppTrackingTransparency prompt before App Store submission
-  runApp(const AmortlyApp());
+  runApp(AmortlyApp(initialTheme: initialTheme));
 }
 
 class AmortlyApp extends StatelessWidget {
-  const AmortlyApp({super.key});
+  final ThemeMode initialTheme;
+  const AmortlyApp({super.key, required this.initialTheme});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AppThemeCubit(),
+      create: (_) => AppThemeCubit(initialTheme),
       child: BlocBuilder<AppThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
           return MaterialApp.router(

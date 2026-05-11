@@ -29,19 +29,15 @@ class CompareScreen extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 32),
         children: [
           // Side-by-side loan cards
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: CompareHeaderCards(
               loan1Label: 'Without Extra',
-              loan1Amount: '\$0/month',
-              loan1Monthly: '\$2,577.80',
-              loan1Rate: '',
-              loan1Term: '',
+              loan1TotalInterest: '\$248,950',
+              loan1Monthly: '\$2,377.80',
               loan2Label: 'With Extra',
-              loan2Amount: '\$200/month',
-              loan2Monthly: '\$2,377.80',
-              loan2Rate: '',
-              loan2Term: '',
+              loan2TotalInterest: '\$112,806',
+              loan2Monthly: '\$2,577.80',
             ),
           ),
           const SizedBox(height: 16),
@@ -57,11 +53,11 @@ class CompareScreen extends StatelessWidget {
                   color: isDark ? AppColors.darkBorder : AppColors.neutral200,
                 ),
               ),
-              child: Column(
-                children: const [
+              child: const Column(
+                children: [
                   MetricRow(
-                    label: 'Monthly Payment',
-                    loan1Value: '\$2,577.80',
+                    label: 'Payment',
+                    loan1Value: '\$2,377.80',
                     loan2Value: '\$2,577.80',
                     lowerIsBetter: true,
                     betterIndex: 0,
@@ -74,23 +70,23 @@ class CompareScreen extends StatelessWidget {
                     betterIndex: 1,
                   ),
                   MetricRow(
-                    label: 'Interest Saved',
-                    loan1Value: '-',
-                    loan2Value: '\$136,144',
-                    lowerIsBetter: false,
-                    betterIndex: 1,
-                  ),
-                  MetricRow(
                     label: 'Payoff Date',
-                    loan1Value: 'May 2039',
+                    loan1Value: 'Aug 2040',
                     loan2Value: 'May 2033',
                     lowerIsBetter: true,
                     betterIndex: 1,
                   ),
                   MetricRow(
                     label: 'Time Saved',
-                    loan1Value: '-',
-                    loan2Value: '6 yrs 2 mo',
+                    loan1Value: '—',
+                    loan2Value: '7 yrs 3 mo',
+                    lowerIsBetter: false,
+                    betterIndex: 1,
+                  ),
+                  MetricRow(
+                    label: 'Interest Saved',
+                    loan1Value: '—',
+                    loan2Value: '\$136,144',
                     lowerIsBetter: false,
                     betterIndex: 1,
                     isLast: true,
@@ -107,7 +103,7 @@ class CompareScreen extends StatelessWidget {
             child: BetterChoiceCard(
               winnerLabel: 'With Extra \$200/month',
               reasonText:
-                  'You save \$136,144 in interest and become debt free 6 years 2 months sooner.',
+                  'You save \$136,144 in interest and become debt free 7 years 3 months sooner.',
             ),
           ),
           const SizedBox(height: 16),

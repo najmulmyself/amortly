@@ -126,7 +126,8 @@ class LoanInputForm extends StatelessWidget {
               icon: CupertinoIcons.calendar_today,
               label: 'Start Date',
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 child: Text(
                   'May 12, 2025',
                   style: TextStyle(
@@ -203,7 +204,7 @@ class LoanInputForm extends StatelessWidget {
                   ),
                   CupertinoSwitch(
                     value: includeInPayment,
-                    activeColor: AppColors.brand700,
+                    activeTrackColor: AppColors.brand700,
                     onChanged: onIncludeInPaymentChanged,
                   ),
                 ],
@@ -274,6 +275,7 @@ class _FormRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 14),
@@ -284,25 +286,19 @@ class _FormRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (subtitle != null && subtitle!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitle!,
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 11,
-                    color: isDark ? AppColors.neutral400 : AppColors.neutral500,
-                  ),
-                ),
-              ],
-            ],
+        if (subtitle != null && subtitle!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              subtitle!,
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 11,
+                color: isDark ? AppColors.neutral400 : AppColors.neutral500,
+              ),
+            ),
           ),
-        ),
-        child,
+        Expanded(child: child),
       ],
     );
   }
@@ -317,4 +313,3 @@ class _Divider extends StatelessWidget {
     return Divider(height: 1, thickness: 0.5, color: color, indent: 44);
   }
 }
-

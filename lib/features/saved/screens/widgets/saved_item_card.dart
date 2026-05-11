@@ -5,21 +5,17 @@ import '../../../../core/constants/app_colors.dart';
 class SavedItemCard extends StatelessWidget {
   final String label;
   final String price;
-  final String term;
-  final String rate;
+  final String date;
   final String monthly;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
   const SavedItemCard({
     super.key,
     required this.label,
     required this.price,
-    required this.term,
-    required this.rate,
+    required this.date,
     required this.monthly,
     this.onTap,
-    this.onDelete,
   });
 
   @override
@@ -29,7 +25,7 @@ class SavedItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.white,
           borderRadius: BorderRadius.circular(16),
@@ -39,7 +35,6 @@ class SavedItemCard extends StatelessWidget {
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Icon
             Container(
@@ -51,13 +46,13 @@ class SavedItemCard extends StatelessWidget {
               ),
               child: const Icon(
                 CupertinoIcons.house_fill,
-                size: 20,
+                size: 18,
                 color: AppColors.brand800,
               ),
             ),
             const SizedBox(width: 12),
 
-            // Info
+            // Label + subtitle
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,9 +66,9 @@ class SavedItemCard extends StatelessWidget {
                       color: isDark ? AppColors.white : AppColors.neutral900,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
-                    '$price · $term · $rate',
+                    '$price · $date',
                     style: const TextStyle(
                       fontFamily: 'DMSans',
                       fontSize: 13,

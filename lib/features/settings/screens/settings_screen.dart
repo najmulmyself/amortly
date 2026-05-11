@@ -14,8 +14,12 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeCubit = context.watch<AppThemeCubit>();
-    final isDarkMode = themeCubit.state == ThemeMode.dark;
+    final themeMode = context.watch<AppThemeCubit>().state;
+    final themeLabel = themeMode == ThemeMode.dark
+        ? 'Dark'
+        : themeMode == ThemeMode.light
+            ? 'Light'
+            : 'System';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -25,10 +29,6 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
         children: [
-          // PRO banner
-          const ProUpgradeRow(),
-          const SizedBox(height: 24),
-
           // ── Preferences ────────────────────────────────
           SettingsGroup(
             title: 'Preferences',
@@ -56,64 +56,18 @@ class SettingsScreen extends StatelessWidget {
                 isDark: isDark,
               ),
               SettingsRow(
-                icon: CupertinoIcons.moon_fill,
-                iconColor: AppColors.neutral700,
-                label: 'Dark Mode',
-                showChevron: false,
+                icon: CupertinoIcons.sun_max_fill,
+                iconColor: AppColors.warning,
+                label: 'Theme',
+                trailingValue: themeLabel,
                 isDark: isDark,
-                trailingWidget: CupertinoSwitch(
-                  value: isDarkMode,
-                  activeColor: AppColors.brand700,
-                  onChanged: (v) => v
-                      ? context.read<AppThemeCubit>().setDark()
-                      : context.read<AppThemeCubit>().setLight(),
-                ),
+                onTap: () => _showThemePicker(context),
               ),
               SettingsRow(
                 icon: CupertinoIcons.clock,
-                iconColor: AppColors.warning,
+                iconColor: AppColors.brand500,
                 label: 'Default Loan Term',
                 trailingValue: '30 Years',
-                isDark: isDark,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // ── Trust & Privacy ────────────────────────────
-          SettingsGroup(
-            title: 'Trust & Privacy',
-            isDark: isDark,
-            rows: [
-              SettingsRow(
-                icon: CupertinoIcons.lock_shield_fill,
-                iconColor: AppColors.success,
-                label: '100% Private',
-                trailingValue: '',
-                showChevron: false,
-                isDark: isDark,
-                trailingWidget: const Icon(
-                  CupertinoIcons.checkmark_circle_fill,
-                  size: 20,
-                  color: AppColors.success,
-                ),
-              ),
-              SettingsRow(
-                icon: CupertinoIcons.doc_text,
-                iconColor: AppColors.brand700,
-                label: 'Privacy Policy',
-                isDark: isDark,
-              ),
-              SettingsRow(
-                icon: CupertinoIcons.info_circle,
-                iconColor: AppColors.neutral500,
-                label: 'How Ads Work',
-                isDark: isDark,
-              ),
-              SettingsRow(
-                icon: CupertinoIcons.arrow_clockwise_circle,
-                iconColor: AppColors.info,
-                label: 'Restore Pro Purchase',
                 isDark: isDark,
               ),
             ],
@@ -138,23 +92,31 @@ class SettingsScreen extends StatelessWidget {
                 isDark: isDark,
               ),
               SettingsRow(
+                icon: CupertinoIcons.doc_text,
+                iconColor: AppColors.neutral500,
+                label: 'Privacy Policy',
+                isDark: isDark,
+              ),
+              SettingsRow(
                 icon: CupertinoIcons.info_circle,
                 iconColor: AppColors.neutral500,
-                label: 'Version 1.0.0',
-                trailingValue: '',
-                showChevron: false,
+                label: 'Terms of Use',
                 isDark: isDark,
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+
+          // PRO upgrade banner at bottom
+          const ProUpgradeRow(),
+          const SizedBox(height: 20),
 
           // Privacy message
-          Center(
+          const Center(
             child: Text(
               AppStrings.privacyMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'DMSans',
                 fontSize: 12,
                 color: AppColors.neutral400,
@@ -166,4 +128,37 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showThemePicker(BuildContext context) {
+    final cubit = context.read<AppThemeCubit>();
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (sheetContext) => CupertinoActionSheet(
+        title: const Text('Theme'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              cubit.setLight();
+              Navigator.of(sheetContext, rootNavigator: true).pop();
+            },
+            child: const Text('Light'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              cubit.setDark();
+              Navigator.of(sheetContext, rootNavigator: true).pop();
+            },
+            child: const Text('Dark'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: false,
+          onPressed: () => Navigator.of(sheetContext, rootNavigator: true).pop(),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
 }
+
+

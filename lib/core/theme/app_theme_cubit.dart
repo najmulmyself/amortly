@@ -3,19 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppThemeCubit extends Cubit<ThemeMode> {
-  AppThemeCubit() : super(ThemeMode.system) {
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isDark = prefs.getBool('dark_mode');
-    if (isDark == null) {
-      emit(ThemeMode.system);
-    } else {
-      emit(isDark ? ThemeMode.dark : ThemeMode.light);
-    }
-  }
+  /// Pass the initial [ThemeMode] read from SharedPreferences in main()
+  /// so the cubit never emits during the first build frame.
+  AppThemeCubit(super.initialMode);
 
   Future<void> setLight() async {
     final prefs = await SharedPreferences.getInstance();

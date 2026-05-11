@@ -19,30 +19,26 @@ class _SavedScreenState extends State<SavedScreen> {
   static const _loans = [
     {
       'label': 'Dream Home',
-      'price': '\$460k',
-      'term': '30yr',
-      'rate': '6.25%',
+      'price': '\$450,000',
+      'date': 'May 12, 2025',
       'monthly': '\$2,377',
     },
     {
       'label': 'Investment Property',
-      'price': '\$650k',
-      'term': '25yr',
-      'rate': '6.0%',
+      'price': '\$550,000',
+      'date': 'May 10, 2025',
       'monthly': '\$3,340',
     },
     {
       'label': 'Vacation Home',
-      'price': '\$325k',
-      'term': '15yr',
-      'rate': '5.5%',
+      'price': '\$325,000',
+      'date': 'May 8, 2025',
       'monthly': '\$1,620',
     },
     {
       'label': 'Refinance Option',
-      'price': '\$360k',
-      'term': '30yr',
-      'rate': '5.75%',
+      'price': '\$360,000',
+      'date': 'May 5, 2025',
       'monthly': '\$2,204',
     },
   ];
@@ -61,7 +57,8 @@ class _SavedScreenState extends State<SavedScreen> {
         title: const Text(AppStrings.tabSaved),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 20),
+            icon:
+                const Icon(CupertinoIcons.line_horizontal_3_decrease, size: 20),
             onPressed: () {},
             tooltip: 'Filter',
           ),
@@ -108,8 +105,7 @@ class _SavedScreenState extends State<SavedScreen> {
                           return SavedItemCard(
                             label: loan['label']!,
                             price: loan['price']!,
-                            term: loan['term']!,
-                            rate: loan['rate']!,
+                            date: loan['date']!,
                             monthly: loan['monthly']!,
                           );
                         },
@@ -120,7 +116,8 @@ class _SavedScreenState extends State<SavedScreen> {
       ),
       // Add New Loan button
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
         child: SizedBox(
           height: 52,
           child: ElevatedButton.icon(
