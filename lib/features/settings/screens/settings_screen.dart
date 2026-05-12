@@ -18,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPro = PurchaseService().isPro;
     final themeMode = context.watch<AppThemeCubit>().state;
     final themeLabel = themeMode == ThemeMode.dark
         ? 'Dark'
@@ -79,19 +80,33 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ── Amortly Pro ────────────────────────────────
-          SettingsGroup(
-            title: 'Amortly Pro',
-            isDark: isDark,
-            rows: [
-              SettingsRow(
-                icon: CupertinoIcons.arrow_clockwise,
-                iconColor: AppColors.brand700,
-                label: 'Restore Purchases',
-                isDark: isDark,
-                onTap: () => PurchaseService().restorePurchases(),
-              ),
-            ],
-          ),
+          if (isPro)
+            SettingsGroup(
+              title: 'Amortly Pro',
+              isDark: isDark,
+              rows: [
+                SettingsRow(
+                  icon: CupertinoIcons.checkmark_seal_fill,
+                  iconColor: AppColors.success,
+                  label: 'Amortly Pro Unlocked',
+                  isDark: isDark,
+                ),
+              ],
+            )
+          else
+            SettingsGroup(
+              title: 'Amortly Pro',
+              isDark: isDark,
+              rows: [
+                SettingsRow(
+                  icon: CupertinoIcons.arrow_clockwise,
+                  iconColor: AppColors.brand700,
+                  label: 'Restore Purchases',
+                  isDark: isDark,
+                  onTap: () => PurchaseService().restorePurchases(),
+                ),
+              ],
+            ),
           const SizedBox(height: 24),
 
           // ── About ──────────────────────────────────────
@@ -118,9 +133,16 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: AppColors.brand700,
                 label: 'Share Amortly',
                 isDark: isDark,
-                onTap: () => Share.share(
-                  'Check out Amortly — the best mortgage calculator for iOS! https://apps.apple.com/app/amortly',
-                ),
+                onTap: () {
+                  final box = context.findRenderObject() as RenderBox?;
+                  final origin = box == null
+                      ? null
+                      : box.localToGlobal(Offset.zero) & box.size;
+                  Share.share(
+                    'Check out Amortly — the best mortgage calculator for iOS! https://apps.apple.com/app/amortly',
+                    sharePositionOrigin: origin,
+                  );
+                },
               ),
               SettingsRow(
                 icon: CupertinoIcons.doc_text,
@@ -146,9 +168,11 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // PRO upgrade banner at bottom
-          const ProUpgradeRow(),
-          const SizedBox(height: 20),
+          // PRO upgrade banner — only shown when not yet purchased
+          if (!isPro) ...[
+            const ProUpgradeRow(),
+            const SizedBox(height: 20),
+          ],
 
           // Privacy message
           const Center(

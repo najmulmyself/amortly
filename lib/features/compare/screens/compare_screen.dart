@@ -91,16 +91,19 @@ class _CompareBody extends StatelessWidget {
           appBar: AppBar(
             title: const Text(AppStrings.tabCompare),
             actions: [
-              IconButton(
-                icon: const Icon(CupertinoIcons.share, size: 22),
-                onPressed: () => _shareResult(
-                  loan1Monthly: loan1Monthly,
-                  loan2Monthly: loan2Monthly,
-                  loan1Interest: loan1Interest,
-                  loan2Interest: loan2Interest,
-                  timeSaved: timeSaved,
-                  interestSaved: interestSaved,
-                  extra: extra,
+              Builder(
+                builder: (btnCtx) => IconButton(
+                  icon: const Icon(CupertinoIcons.share, size: 22),
+                  onPressed: () => _shareResult(
+                    btnCtx,
+                    loan1Monthly: loan1Monthly,
+                    loan2Monthly: loan2Monthly,
+                    loan1Interest: loan1Interest,
+                    loan2Interest: loan2Interest,
+                    timeSaved: timeSaved,
+                    interestSaved: interestSaved,
+                    extra: extra,
+                  ),
                 ),
               ),
             ],
@@ -213,25 +216,28 @@ class _CompareBody extends StatelessWidget {
               // Share button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: OutlinedButton.icon(
-                  onPressed: () => _shareResult(
-                    loan1Monthly: loan1Monthly,
-                    loan2Monthly: loan2Monthly,
-                    loan1Interest: loan1Interest,
-                    loan2Interest: loan2Interest,
-                    timeSaved: timeSaved,
-                    interestSaved: interestSaved,
-                    extra: extra,
-                  ),
-                  icon: const Icon(CupertinoIcons.share, size: 18),
-                  label: const Text('Share This Result'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.brand800,
-                    side: const BorderSide(color: AppColors.brand300),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Builder(
+                  builder: (btnCtx) => OutlinedButton.icon(
+                    onPressed: () => _shareResult(
+                      btnCtx,
+                      loan1Monthly: loan1Monthly,
+                      loan2Monthly: loan2Monthly,
+                      loan1Interest: loan1Interest,
+                      loan2Interest: loan2Interest,
+                      timeSaved: timeSaved,
+                      interestSaved: interestSaved,
+                      extra: extra,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    icon: const Icon(CupertinoIcons.share, size: 18),
+                    label: const Text('Share This Result'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.brand800,
+                      side: const BorderSide(color: AppColors.brand300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                   ),
                 ),
               ),
@@ -244,7 +250,8 @@ class _CompareBody extends StatelessWidget {
     );
   }
 
-  void _shareResult({
+  void _shareResult(
+    BuildContext context, {
     required String loan1Monthly,
     required String loan2Monthly,
     required String loan1Interest,
@@ -254,6 +261,9 @@ class _CompareBody extends StatelessWidget {
     required double extra,
   }) {
     AdService().showInterstitial();
+    final box = context.findRenderObject() as RenderBox?;
+    final origin =
+        box == null ? null : box.localToGlobal(Offset.zero) & box.size;
     final extraLabel = extra > 0
         ? '+${CurrencyFormatter.format(extra)}/mo extra'
         : 'no extra payment';
@@ -267,7 +277,7 @@ You save $interestSaved in interest${timeSaved != '—' ? ' and $timeSaved soone
 
 Calculate your savings at https://apps.apple.com/app/amortly
 ''';
-    Share.share(text.trim());
+    Share.share(text.trim(), sharePositionOrigin: origin);
   }
 }
 

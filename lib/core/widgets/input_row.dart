@@ -39,7 +39,13 @@ class _InputRowState extends State<InputRow> {
     _controller = TextEditingController(text: widget.value);
     _focusNode = FocusNode();
     _focusNode.addListener(() {
-      if (!_focusNode.hasFocus) {
+      if (_focusNode.hasFocus) {
+        // Strip currency symbols and commas so the user edits raw digits.
+        final raw = widget.value.replaceAll(RegExp(r'[^\d.]'), '');
+        _controller.text = raw;
+        _controller.selection = TextSelection.collapsed(offset: raw.length);
+      } else {
+        // Restore the formatted value from the cubit on blur.
         _controller.text = widget.value;
       }
     });
@@ -69,7 +75,8 @@ class _InputRowState extends State<InputRow> {
           ? null
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.white,
-              border: Border(bottom: BorderSide(
+              border: Border(
+                  bottom: BorderSide(
                 color: isDark ? AppColors.darkBorder : AppColors.neutral200,
               )),
             ),
