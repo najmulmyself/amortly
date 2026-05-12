@@ -42,13 +42,15 @@ Future<void> main() async {
       ? ThemeMode.system
       : (savedDark ? ThemeMode.dark : ThemeMode.light);
 
-  runApp(AmortlyApp(initialTheme: initialTheme, onboardingDone: onboardingDone));
+  runApp(
+      AmortlyApp(initialTheme: initialTheme, onboardingDone: onboardingDone));
 }
 
 class AmortlyApp extends StatelessWidget {
   final ThemeMode initialTheme;
   final bool onboardingDone;
-  const AmortlyApp({super.key, required this.initialTheme, required this.onboardingDone});
+  const AmortlyApp(
+      {super.key, required this.initialTheme, required this.onboardingDone});
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +73,11 @@ class AmortlyApp extends StatelessWidget {
                 themeMode: themeMode,
                 routerConfig: buildAppRouter(onboardingDone),
                 scrollBehavior: const _IOSScrollBehavior(),
+                builder: (context, child) => GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                  child: child,
+                ),
               );
             },
           );
