@@ -1,28 +1,44 @@
+import 'dart:io';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_cubit.dart';
 import 'features/calculator/cubit/calculator_cubit.dart';
 import 'features/saved/cubit/saved_cubit.dart';
 import 'navigation/app_router.dart';
+import 'services/ad_service.dart';
+import 'services/purchase_service.dart';
 import 'services/storage_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await MobileAds.instance.initialize();
+
+  // 1. Hive
   await StorageService().init();
 
-  // Read saved theme before runApp so AppThemeCubit never emits during build,
-  // which would violate the debugFrameWasSentToEngine assertion.
+  // 2. Pro status (must be before AdService so ads aren't loaded for Pro users)
+  await PurchaseService().loadProStatus();
+
+  // 3. ATT prompt — must happen before first ad request on iOS 14.5+
+  if (Platform.isIOS) {
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    if (status == TrackingStatus.notDetermined) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      await AppTrackingTransparency.requestTrackingAuthorization();
+    }
+  }
+
+  // 4. AdMob (after ATT)
+  await AdService().initialize();
+
   final prefs = await SharedPreferences.getInstance();
   final savedDark = prefs.getBool('dark_mode');
   final initialTheme = savedDark == null
       ? ThemeMode.system
       : (savedDark ? ThemeMode.dark : ThemeMode.light);
 
-  // TODO(att): AppTrackingTransparency prompt before App Store submission
   runApp(AmortlyApp(initialTheme: initialTheme));
 }
 

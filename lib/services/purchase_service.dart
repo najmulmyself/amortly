@@ -1,6 +1,7 @@
 // lib/services/purchase_service.dart
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'ad_service.dart';
 
 class PurchaseService {
   static const String proProductId = 'com.amortly.app.pro';
@@ -47,6 +48,7 @@ class PurchaseService {
       _isPro = true;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_pro', true);
+      AdService().setProStatus(true);
     }
 
     if (details.pendingCompletePurchase) {

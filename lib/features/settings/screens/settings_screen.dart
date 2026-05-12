@@ -189,6 +189,13 @@ class SettingsScreen extends StatelessWidget {
             },
             child: const Text('Dark'),
           ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              cubit.setSystem();
+              Navigator.of(sheetContext, rootNavigator: true).pop();
+            },
+            child: const Text('System'),
+          ),
         ],
         cancelButton: CupertinoActionSheetAction(
           isDestructiveAction: false,

@@ -1,16 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../calculator/cubit/calculator_cubit.dart';
-import '../../calculator/cubit/calculator_state.dart';
 import '../../calculator/services/mortgage_calculator.dart';
 import '../cubit/saved_cubit.dart';
 import '../cubit/saved_state.dart';
 import '../models/saved_calculation.dart';
+import '../../../services/ad_service.dart';
+import '../../../services/purchase_service.dart';
 import 'widgets/saved_item_card.dart';
 import 'widgets/empty_saved_state.dart';
 
@@ -23,6 +25,25 @@ class SavedScreen extends StatefulWidget {
 
 class _SavedScreenState extends State<SavedScreen> {
   int _segmentIndex = 0;
+  BannerAd? _bannerAd;
+  bool _bannerAdLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!PurchaseService().isPro) {
+      _bannerAd = AdService().createBannerAd()
+        ..load().then((_) {
+          if (mounted) setState(() => _bannerAdLoaded = true);
+        });
+    }
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +61,12 @@ class _SavedScreenState extends State<SavedScreen> {
               IconButton(
                 icon: const Icon(CupertinoIcons.line_horizontal_3_decrease,
                     size: 20),
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Filters coming soon'),
+                    duration: Duration(seconds: 2),
+                  ),
+                ),
                 tooltip: 'Filter',
               ),
             ],
@@ -115,33 +141,44 @@ class _SavedScreenState extends State<SavedScreen> {
               ),
             ],
           ),
-          // Add New Loan button
-          bottomNavigationBar: Padding(
-            padding: EdgeInsets.fromLTRB(
-                16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () => _saveCurrentLoan(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brand800,
-                  foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
+          // Add New Loan button + optional banner
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_bannerAdLoaded && _bannerAd != null)
+                SizedBox(
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!),
                 ),
-                icon: const Icon(CupertinoIcons.add, size: 18),
-                label: const Text(
-                  '+ Add New Loan',
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
+                child: SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _saveCurrentLoan(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.brand800,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(CupertinoIcons.add, size: 18),
+                    label: const Text(
+                      '+ Add New Loan',
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         );
       },

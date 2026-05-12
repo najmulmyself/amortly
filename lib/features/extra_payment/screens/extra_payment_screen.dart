@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/disclaimer_text.dart';
 import '../../../core/widgets/section_label.dart';
+import '../../../services/ad_service.dart';
 import '../../calculator/cubit/calculator_cubit.dart';
 import '../cubit/extra_payment_cubit.dart';
 import '../cubit/extra_payment_state.dart';
@@ -21,7 +23,8 @@ class ExtraPaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (ctx) => ExtraPaymentCubit(ctx.read<CalculatorCubit>().state.input),
+      create: (ctx) =>
+          ExtraPaymentCubit(ctx.read<CalculatorCubit>().state.input),
       child: const _ExtraPaymentBody(),
     );
   }
@@ -80,154 +83,187 @@ class _ExtraPaymentBody extends StatelessWidget {
         final origYrs = origMonths ~/ 12;
         final origTermLabel = '$origYrs years';
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text(AppStrings.titleExtraPayment),
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.info_circle, size: 22),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          // Savings hero card
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: SavingsSummaryCard(
-              interestSaved: CurrencyFormatter.format(result.interestSaved),
-              yearsSaved: savedDisplay,
-              newPayoffDate: DateFormatter.payoffDate(result.newPayoffDate),
-              originalPayoffDate: DateFormatter.payoffDate(originalPayoff),
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: const Text(AppStrings.titleExtraPayment),
+            leading: IconButton(
+              icon: const Icon(CupertinoIcons.chevron_back, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(CupertinoIcons.info_circle, size: 22),
+                onPressed: () => _showInfoSheet(context),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-
-          // Celebratory sub-line
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.brand50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.brand100,
+          body: ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              // Savings hero card
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SavingsSummaryCard(
+                  interestSaved: CurrencyFormatter.format(result.interestSaved),
+                  yearsSaved: savedDisplay,
+                  newPayoffDate: DateFormatter.payoffDate(result.newPayoffDate),
+                  originalPayoffDate: DateFormatter.payoffDate(originalPayoff),
                 ),
               ),
-              child: Row(
-                children: [
-                  const Text('🎉', style: TextStyle(fontSize: 16)),
-                  const SizedBox(width: 8),
-                  Text(
-                    "That's ${result.monthsSaved} fewer payments!",
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.brand100 : AppColors.brand800,
+              const SizedBox(height: 8),
+
+              // Celebratory sub-line
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkSurface : AppColors.brand50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.brand100,
                     ),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      const Text('🎉', style: TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Text(
+                        "That's ${result.monthsSaved} fewer payments!",
+                        style: TextStyle(
+                          fontFamily: 'DMSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isDark ? AppColors.brand100 : AppColors.brand800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // New Payoff Date & Total Interest rows
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _InfoCard(
-              isDark: isDark,
-              children: [
-                _InfoRow(
-                  label: 'New Payoff Date',
-                  value: DateFormatter.payoffDate(result.newPayoffDate),
+              // New Payoff Date & Total Interest rows
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _InfoCard(
                   isDark: isDark,
+                  children: [
+                    _InfoRow(
+                      label: 'New Payoff Date',
+                      value: DateFormatter.payoffDate(result.newPayoffDate),
+                      isDark: isDark,
+                    ),
+                    Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.neutral200),
+                    _InfoRow(
+                      label: 'Total Interest',
+                      value: CurrencyFormatter.format(result.newTotalInterest),
+                      subtitle:
+                          'vs ${CurrencyFormatter.format(result.originalTotalInterest)} without extra payments',
+                      isDark: isDark,
+                    ),
+                  ],
                 ),
-                Divider(height: 1, thickness: 0.5, color: isDark ? AppColors.darkBorder : AppColors.neutral200),
-                _InfoRow(
-                  label: 'Total Interest',
-                  value: CurrencyFormatter.format(result.newTotalInterest),
-                  subtitle: 'vs ${CurrencyFormatter.format(result.originalTotalInterest)} without extra payments',
+              ),
+              const SizedBox(height: 20),
+
+              // Extra payment slider
+              const SectionLabel(text: 'Extra Payment'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: PaymentSlider(
+                  value: state.extraMonthly,
+                  min: 0,
+                  max: 2000,
+                  onChanged: cubit.setExtra,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Choose Extra Payment Type
+              const SectionLabel(text: 'Choose Extra Payment Type'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _PaymentTypeSelector(
                   isDark: isDark,
+                  selected: state.paymentType,
+                  onChanged: cubit.setPaymentType,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 20),
 
-          // Extra payment slider
-          const SectionLabel(text: 'Extra Payment'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: PaymentSlider(
-              value: state.extraMonthly,
-              min: 0,
-              max: 2000,
-              onChanged: cubit.setExtra,
-            ),
-          ),
-          const SizedBox(height: 20),
+              // See Amortization Impact row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _TappableRow(
+                  isDark: isDark,
+                  label: 'See Amortization Impact',
+                  onTap: () {
+                    AdService().showInterstitial();
+                    context.go('/schedule');
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
 
-          // Choose Extra Payment Type
-          const SectionLabel(text: 'Choose Extra Payment Type'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _PaymentTypeSelector(
-              isDark: isDark,
-              selected: state.paymentType,
-              onChanged: cubit.setPaymentType,
-            ),
-          ),
-          const SizedBox(height: 20),
+              // Comparison cards
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ComparisonCards(
+                  originalMonthly:
+                      CurrencyFormatter.formatWithCents(basePayment),
+                  newMonthly: CurrencyFormatter.formatWithCents(
+                      basePayment + state.extraMonthly),
+                  originalTerm: origTermLabel,
+                  newTerm: newTermLabel,
+                  originalInterest:
+                      CurrencyFormatter.format(result.originalTotalInterest),
+                  newInterest:
+                      CurrencyFormatter.format(result.newTotalInterest),
+                ),
+              ),
+              const SizedBox(height: 20),
 
-          // See Amortization Impact row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _TappableRow(
-              isDark: isDark,
-              label: 'See Amortization Impact',
-              onTap: () {},
-            ),
+              const SectionLabel(text: 'Balance Over Time'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: BalanceChart(
+                  extraPayment: state.extraMonthly,
+                  input: state.input,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const DisclaimerText(short: true),
+            ],
           ),
-          const SizedBox(height: 20),
-
-          // Comparison cards
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ComparisonCards(
-              originalMonthly: CurrencyFormatter.formatWithCents(basePayment),
-              newMonthly: CurrencyFormatter.formatWithCents(basePayment + state.extraMonthly),
-              originalTerm: origTermLabel,
-              newTerm: newTermLabel,
-              originalInterest: CurrencyFormatter.format(result.originalTotalInterest),
-              newInterest: CurrencyFormatter.format(result.newTotalInterest),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          const SectionLabel(text: 'Balance Over Time'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: BalanceChart(
-              extraPayment: state.extraMonthly,
-              input: state.input,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const DisclaimerText(short: true),
-        ],
-      ),
-    );
+        );
       },
+    );
+  }
+
+  void _showInfoSheet(BuildContext context) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => CupertinoActionSheet(
+        title: const Text('About Extra Payments'),
+        message: const Text(
+          'Making extra principal payments reduces your loan balance faster, '
+          'saving you thousands in interest and years off your mortgage. '
+          'The calculator shows the exact savings based on your current loan terms.',
+        ),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+          child: const Text('Got It'),
+        ),
+      ),
     );
   }
 }
@@ -362,7 +398,8 @@ class _PaymentTypeSelector extends StatelessWidget {
                   bottomRight: isLast ? const Radius.circular(16) : Radius.zero,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Row(
                     children: [
                       Container(
@@ -373,14 +410,19 @@ class _PaymentTypeSelector extends StatelessWidget {
                           border: Border.all(
                             color: selected == i
                                 ? AppColors.brand800
-                                : (isDark ? AppColors.neutral500 : AppColors.neutral300),
+                                : (isDark
+                                    ? AppColors.neutral500
+                                    : AppColors.neutral300),
                             width: selected == i ? 6 : 1.5,
                           ),
-                          color: selected == i ? AppColors.brand800 : Colors.transparent,
+                          color: selected == i
+                              ? AppColors.brand800
+                              : Colors.transparent,
                         ),
                         child: selected == i
                             ? const Center(
-                                child: Icon(Icons.circle, size: 10, color: AppColors.white),
+                                child: Icon(Icons.circle,
+                                    size: 10, color: AppColors.white),
                               )
                             : null,
                       ),
@@ -394,7 +436,9 @@ class _PaymentTypeSelector extends StatelessWidget {
                               fontFamily: 'DMSans',
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.white : AppColors.neutral900,
+                              color: isDark
+                                  ? AppColors.white
+                                  : AppColors.neutral900,
                             ),
                           ),
                           Text(
@@ -462,7 +506,8 @@ class _TappableRow extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(CupertinoIcons.chevron_right, size: 16, color: AppColors.neutral400),
+            const Icon(CupertinoIcons.chevron_right,
+                size: 16, color: AppColors.neutral400),
           ],
         ),
       ),

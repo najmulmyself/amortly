@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/section_label.dart';
+import '../../../services/ad_service.dart';
 import '../../calculator/cubit/calculator_cubit.dart';
 import '../../calculator/cubit/calculator_state.dart';
 import '../../schedule/services/amortization_calculator.dart';
@@ -26,6 +27,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // 0 = Table, 1 = Chart
   int _tabIndex = 0;
   bool _showMonthly = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show interstitial once per session when user navigates to the schedule.
+    // Small post-frame delay lets the screen fully render first.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => AdService().showInterstitial(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,112 +59,135 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         final chartMaxY =
             ((input.loanAmount / 1000 / 100).ceil() * 100).toDouble();
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text(AppStrings.tabSchedule),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.doc_plaintext, size: 20),
-            onPressed: () {},
-            tooltip: 'Export PDF (Pro)',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Table / Chart segmented control
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: _IOSSegmentedControl(
-              labels: const ['Table', 'Chart'],
-              selectedIndex: _tabIndex,
-              onSelected: (i) => setState(() => _tabIndex = i),
-              isDark: isDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Loan summary card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: LoanSummaryCard(
-              loanAmount: CurrencyFormatter.format(input.loanAmount),
-              rate: '${input.annualRate.toStringAsFixed(3)}%',
-              term: '${input.termYears} Years',
-              startDate: DateFormatter.longDate(input.startDate),
-              totalInterest: CurrencyFormatter.format(result.totalInterest),
-              totalCost: CurrencyFormatter.format(result.totalCost),
-              payoffDate: DateFormatter.payoffDate(result.payoffDate),
-              principalPercent: result.principalPercent,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          if (_tabIndex == 0) ...[
-            // Monthly / Yearly / Export toggle bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _ChipButton(
-                    label: 'Monthly',
-                    selected: _showMonthly,
-                    onTap: () => setState(() => _showMonthly = true),
-                  ),
-                  const SizedBox(width: 8),
-                  _ChipButton(
-                    label: 'Yearly',
-                    selected: !_showMonthly,
-                    onTap: () => setState(() => _showMonthly = false),
-                  ),
-                  const Spacer(),
-                  _ExportButton(isDark: isDark),
-                ],
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: const Text(AppStrings.tabSchedule),
+            actions: [
+              IconButton(
+                icon: const Icon(CupertinoIcons.doc_plaintext, size: 20),
+                tooltip: 'Export PDF (Pro)',
+                onPressed: () => _showProNudge(context),
               ),
-            ),
-            const SizedBox(height: 8),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Table / Chart segmented control
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: _IOSSegmentedControl(
+                  labels: const ['Table', 'Chart'],
+                  selectedIndex: _tabIndex,
+                  onSelected: (i) => setState(() => _tabIndex = i),
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(height: 12),
 
-            // Amortization table with real data
-            Expanded(
-              child: AmortizationTable(
-                showMonthly: _showMonthly,
-                monthlyRows: monthlyRows,
-                yearlyRows: yearlyRows,
+              // Loan summary card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: LoanSummaryCard(
+                  loanAmount: CurrencyFormatter.format(input.loanAmount),
+                  rate: '${input.annualRate.toStringAsFixed(3)}%',
+                  term: '${input.termYears} Years',
+                  startDate: DateFormatter.longDate(input.startDate),
+                  totalInterest: CurrencyFormatter.format(result.totalInterest),
+                  totalCost: CurrencyFormatter.format(result.totalCost),
+                  payoffDate: DateFormatter.payoffDate(result.payoffDate),
+                  principalPercent: result.principalPercent,
+                ),
               ),
-            ),
-          ] else ...[
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
-                children: [
-                  const SectionLabel(text: 'Payment Breakdown'),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: PrincipalInterestDonut(
-                      principalPercent: result.principalPercent,
-                      loanAmount: CurrencyFormatter.format(input.loanAmount),
-                      totalInterest:
-                          CurrencyFormatter.format(result.totalInterest),
-                    ),
+              const SizedBox(height: 12),
+
+              if (_tabIndex == 0) ...[
+                // Monthly / Yearly / Export toggle bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      _ChipButton(
+                        label: 'Monthly',
+                        selected: _showMonthly,
+                        onTap: () => setState(() => _showMonthly = true),
+                      ),
+                      const SizedBox(width: 8),
+                      _ChipButton(
+                        label: 'Yearly',
+                        selected: !_showMonthly,
+                        onTap: () => setState(() => _showMonthly = false),
+                      ),
+                      const Spacer(),
+                      _ExportButton(isDark: isDark),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  const SectionLabel(text: 'Balance Over Time'),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: BalanceLineChart(
-                      spots: balanceSpots,
-                      maxY: chartMaxY,
-                    ),
+                ),
+                const SizedBox(height: 8),
+
+                // Amortization table with real data
+                Expanded(
+                  child: AmortizationTable(
+                    showMonthly: _showMonthly,
+                    monthlyRows: monthlyRows,
+                    yearlyRows: yearlyRows,
                   ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+                ),
+              ] else ...[
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+                    children: [
+                      const SectionLabel(text: 'Payment Breakdown'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: PrincipalInterestDonut(
+                          principalPercent: result.principalPercent,
+                          loanAmount:
+                              CurrencyFormatter.format(input.loanAmount),
+                          totalInterest:
+                              CurrencyFormatter.format(result.totalInterest),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const SectionLabel(text: 'Balance Over Time'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: BalanceLineChart(
+                          spots: balanceSpots,
+                          maxY: chartMaxY,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
       },
+    );
+  }
+
+  void _showProNudge(BuildContext context) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Amortly Pro'),
+        content: const Text(
+            'PDF export is a Pro feature. Upgrade to unlock PDF & CSV exports and remove all ads.'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: const Text('Maybe Later'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: const Text('Upgrade'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -210,7 +244,7 @@ class _ExportButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _showProNudgeStatic(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
@@ -237,6 +271,28 @@ class _ExportButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static void _showProNudgeStatic(BuildContext context) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Amortly Pro'),
+        content: const Text(
+            'PDF export is a Pro feature. Upgrade to unlock PDF & CSV exports and remove all ads.'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: const Text('Maybe Later'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: const Text('Upgrade'),
+          ),
+        ],
       ),
     );
   }

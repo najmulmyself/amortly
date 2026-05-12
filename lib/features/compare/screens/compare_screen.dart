@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/disclaimer_text.dart';
+import '../../../services/ad_service.dart';
 import '../../calculator/cubit/calculator_cubit.dart';
 import '../../calculator/cubit/calculator_state.dart';
 import '../cubit/compare_cubit.dart';
@@ -91,7 +93,15 @@ class _CompareBody extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(CupertinoIcons.share, size: 22),
-                onPressed: () {},
+                onPressed: () => _shareResult(
+                  loan1Monthly: loan1Monthly,
+                  loan2Monthly: loan2Monthly,
+                  loan1Interest: loan1Interest,
+                  loan2Interest: loan2Interest,
+                  timeSaved: timeSaved,
+                  interestSaved: interestSaved,
+                  extra: extra,
+                ),
               ),
             ],
           ),
@@ -204,7 +214,15 @@ class _CompareBody extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => _shareResult(
+                    loan1Monthly: loan1Monthly,
+                    loan2Monthly: loan2Monthly,
+                    loan1Interest: loan1Interest,
+                    loan2Interest: loan2Interest,
+                    timeSaved: timeSaved,
+                    interestSaved: interestSaved,
+                    extra: extra,
+                  ),
                   icon: const Icon(CupertinoIcons.share, size: 18),
                   label: const Text('Share This Result'),
                   style: OutlinedButton.styleFrom(
@@ -224,6 +242,32 @@ class _CompareBody extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _shareResult({
+    required String loan1Monthly,
+    required String loan2Monthly,
+    required String loan1Interest,
+    required String loan2Interest,
+    required String timeSaved,
+    required String interestSaved,
+    required double extra,
+  }) {
+    AdService().showInterstitial();
+    final extraLabel = extra > 0
+        ? '+${CurrencyFormatter.format(extra)}/mo extra'
+        : 'no extra payment';
+    final text = '''
+Mortgage Comparison (via Amortly)
+
+Without extra: $loan1Monthly/mo · $loan1Interest total interest
+With $extraLabel: $loan2Monthly/mo · $loan2Interest total interest
+
+You save $interestSaved in interest${timeSaved != '—' ? ' and $timeSaved sooner' : ''}.
+
+Calculate your savings at https://apps.apple.com/app/amortly
+''';
+    Share.share(text.trim());
   }
 }
 
