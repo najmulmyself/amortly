@@ -252,27 +252,44 @@ class _ExtraRow extends StatelessWidget {
           width: 0.5,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(CupertinoIcons.add_circled,
-              size: 18, color: AppColors.brand700),
-          const SizedBox(width: 10),
-          Text(
-            'Extra Payment',
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 14,
-              color: isDark ? AppColors.neutral300 : AppColors.neutral700,
-            ),
+          Row(
+            children: [
+              const Icon(CupertinoIcons.add_circled,
+                  size: 18, color: AppColors.brand700),
+              const SizedBox(width: 10),
+              Text(
+                'Extra Payment',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 14,
+                  color: isDark ? AppColors.neutral300 : AppColors.neutral700,
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-          _ExtraChip(value: 0, selected: extra == 0, onTap: () => onChanged(0)),
-          _ExtraChip(
-              value: 100, selected: extra == 100, onTap: () => onChanged(100)),
-          _ExtraChip(
-              value: 200, selected: extra == 200, onTap: () => onChanged(200)),
-          _ExtraChip(
-              value: 500, selected: extra == 500, onTap: () => onChanged(500)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _ExtraChip(
+                  value: 0, selected: extra == 0, onTap: () => onChanged(0)),
+              _ExtraChip(
+                  value: 100,
+                  selected: extra == 100,
+                  onTap: () => onChanged(100)),
+              _ExtraChip(
+                  value: 200,
+                  selected: extra == 200,
+                  onTap: () => onChanged(200)),
+              _ExtraChip(
+                  value: 500,
+                  selected: extra == 500,
+                  onTap: () => onChanged(500)),
+            ],
+          ),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../features/saved/models/saved_calculation.dart';
 
 class StorageService {
@@ -40,5 +41,17 @@ class StorageService {
       calc.name = newName;
       await calc.save();
     }
+  }
+
+  // ── Onboarding ────────────────────────────────────────
+
+  Future<bool> isOnboardingComplete() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool('onboarding_done') ?? false;
+  }
+
+  Future<void> setOnboardingComplete() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setBool('onboarding_done', true);
   }
 }

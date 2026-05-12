@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme_cubit.dart';
+import '../../../services/purchase_service.dart';
 import 'widgets/settings_row.dart';
 import 'widgets/settings_group.dart';
 import 'widgets/pro_upgrade_row.dart';
@@ -74,6 +78,22 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
+          // ── Amortly Pro ────────────────────────────────
+          SettingsGroup(
+            title: 'Amortly Pro',
+            isDark: isDark,
+            rows: [
+              SettingsRow(
+                icon: CupertinoIcons.arrow_clockwise,
+                iconColor: AppColors.brand700,
+                label: 'Restore Purchases',
+                isDark: isDark,
+                onTap: () => PurchaseService().restorePurchases(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
           // ── About ──────────────────────────────────────
           SettingsGroup(
             title: 'About',
@@ -84,24 +104,43 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: AppColors.warning,
                 label: 'Rate Amortly',
                 isDark: isDark,
+                onTap: () async {
+                  final review = InAppReview.instance;
+                  if (await review.isAvailable()) {
+                    await review.requestReview();
+                  } else {
+                    await review.openStoreListing(appStoreId: '');
+                  }
+                },
               ),
               SettingsRow(
                 icon: CupertinoIcons.share,
                 iconColor: AppColors.brand700,
                 label: 'Share Amortly',
                 isDark: isDark,
+                onTap: () => Share.share(
+                  'Check out Amortly — the best mortgage calculator for iOS! https://apps.apple.com/app/amortly',
+                ),
               ),
               SettingsRow(
                 icon: CupertinoIcons.doc_text,
                 iconColor: AppColors.neutral500,
                 label: 'Privacy Policy',
                 isDark: isDark,
+                onTap: () => launchUrl(
+                  Uri.parse('https://amortly.app/privacy'),
+                  mode: LaunchMode.externalApplication,
+                ),
               ),
               SettingsRow(
                 icon: CupertinoIcons.info_circle,
                 iconColor: AppColors.neutral500,
                 label: 'Terms of Use',
                 isDark: isDark,
+                onTap: () => launchUrl(
+                  Uri.parse('https://amortly.app/terms'),
+                  mode: LaunchMode.externalApplication,
+                ),
               ),
             ],
           ),
@@ -153,12 +192,11 @@ class SettingsScreen extends StatelessWidget {
         ],
         cancelButton: CupertinoActionSheetAction(
           isDestructiveAction: false,
-          onPressed: () => Navigator.of(sheetContext, rootNavigator: true).pop(),
+          onPressed: () =>
+              Navigator.of(sheetContext, rootNavigator: true).pop(),
           child: const Text('Cancel'),
         ),
       ),
     );
   }
 }
-
-

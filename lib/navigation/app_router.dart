@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/calculator/screens/calculator_screen.dart';
@@ -8,10 +7,18 @@ import '../features/saved/screens/saved_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/extra_payment/screens/extra_payment_screen.dart';
 import '../features/affordability/screens/affordability_screen.dart';
+import '../services/storage_service.dart';
 import 'main_shell.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) async {
+    final onboardingDone = await StorageService().isOnboardingComplete();
+    if (!onboardingDone && state.matchedLocation != '/onboarding') {
+      return '/onboarding';
+    }
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/onboarding',

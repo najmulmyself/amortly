@@ -4,6 +4,7 @@ import '../widgets/onboarding_slide.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../services/storage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -40,15 +41,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/');
+      await StorageService().setOnboardingComplete();
+      if (mounted) context.go('/');
     }
+  }
+
+  Future<void> _skip() async {
+    await StorageService().setOnboardingComplete();
+    if (mounted) context.go('/');
   }
 
   @override
@@ -61,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
-                onPressed: () => context.go('/'),
+                onPressed: () => _skip(),
                 child: const Text(
                   'Skip',
                   style: TextStyle(
@@ -135,5 +142,6 @@ class _SlideData {
   final String body;
   final IconData icon;
 
-  const _SlideData({required this.title, required this.body, required this.icon});
+  const _SlideData(
+      {required this.title, required this.body, required this.icon});
 }
