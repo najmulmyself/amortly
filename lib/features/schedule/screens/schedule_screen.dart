@@ -1,8 +1,15 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/section_label.dart';
+import '../../calculator/cubit/calculator_cubit.dart';
+import '../../calculator/cubit/calculator_state.dart';
+import '../../schedule/services/amortization_calculator.dart';
 import 'widgets/loan_summary_card.dart';
 import 'widgets/amortization_table.dart';
 import 'widgets/principal_interest_donut.dart';
@@ -23,6 +30,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return BlocBuilder<CalculatorCubit, CalculatorState>(
+      builder: (context, calcState) {
+        final input = calcState.input;
+        final result = calcState.result;
+        final monthlyRows = AmortizationCalculator.buildMonthly(input);
+        final yearlyRows = AmortizationCalculator.buildYearly(input);
+
+        // Compute balance spots for chart: yearly balance in $k
+        final balanceSpots = yearlyRows
+            .map((r) => FlSpot(r.period.toDouble(), r.balance / 1000))
+            .toList();
+        if (balanceSpots.isNotEmpty) {
+          balanceSpots.insert(0, FlSpot(0, input.loanAmount / 1000));
+        }
+        final chartMaxY =
+            ((input.loanAmount / 1000 / 100).ceil() * 100).toDouble();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -51,17 +75,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           const SizedBox(height: 12),
 
           // Loan summary card
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: LoanSummaryCard(
-              loanAmount: '\$360,000',
-              rate: '6.250%',
-              term: '30 Years',
-              startDate: 'May 12, 2025',
-              totalInterest: '\$438,347',
-              totalCost: '\$798,347',
-              payoffDate: 'May 2055',
-              principalPercent: 45.1,
+              loanAmount: CurrencyFormatter.format(input.loanAmount),
+              rate: '${input.annualRate.toStringAsFixed(3)}%',
+              term: '${input.termYears} Years',
+              startDate: DateFormatter.longDate(input.startDate),
+              totalInterest: CurrencyFormatter.format(result.totalInterest),
+              totalCost: CurrencyFormatter.format(result.totalCost),
+              payoffDate: DateFormatter.payoffDate(result.payoffDate),
+              principalPercent: result.principalPercent,
             ),
           ),
           const SizedBox(height: 12),
@@ -90,29 +114,37 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Amortization table
+            // Amortization table with real data
             Expanded(
-              child: AmortizationTable(showMonthly: _showMonthly),
+              child: AmortizationTable(
+                showMonthly: _showMonthly,
+                monthlyRows: monthlyRows,
+                yearlyRows: yearlyRows,
+              ),
             ),
           ] else ...[
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
-                children: const [
-                  SectionLabel(text: 'Payment Breakdown'),
+                children: [
+                  const SectionLabel(text: 'Payment Breakdown'),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: PrincipalInterestDonut(
-                      principalPercent: 45.1,
-                      loanAmount: '\$360,000',
-                      totalInterest: '\$438,347',
+                      principalPercent: result.principalPercent,
+                      loanAmount: CurrencyFormatter.format(input.loanAmount),
+                      totalInterest:
+                          CurrencyFormatter.format(result.totalInterest),
                     ),
                   ),
-                  SizedBox(height: 20),
-                  SectionLabel(text: 'Balance Over Time'),
+                  const SizedBox(height: 20),
+                  const SectionLabel(text: 'Balance Over Time'),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: BalanceLineChart(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: BalanceLineChart(
+                      spots: balanceSpots,
+                      maxY: chartMaxY,
+                    ),
                   ),
                 ],
               ),
@@ -120,6 +152,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ],
         ],
       ),
+    );
+      },
     );
   }
 }

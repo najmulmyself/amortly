@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_cubit.dart';
+import 'features/calculator/cubit/calculator_cubit.dart';
 import 'navigation/app_router.dart';
 
 Future<void> main() async {
@@ -29,8 +30,11 @@ class AmortlyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AppThemeCubit(initialTheme),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AppThemeCubit(initialTheme)),
+        BlocProvider(create: (_) => CalculatorCubit()),
+      ],
       child: BlocBuilder<AppThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
           return MaterialApp.router(

@@ -1,9 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/disclaimer_text.dart';
+import '../cubit/calculator_cubit.dart';
+import '../cubit/calculator_state.dart';
 import 'widgets/loan_input_form.dart';
 import 'widgets/result_card.dart';
 import 'widgets/quick_presets_bar.dart';
@@ -16,21 +21,8 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  // Calculator mode: 0=Basic, 1=Advanced, 2=Buy vs Rent
+  // UI-only state (not business logic)
   int _modeIndex = 0;
-
-  // Loan inputs
-  String _homePrice = '450,000';
-  String _downPayment = '90,000';
-  String _loanAmount = '360,000';
-  String _rate = '6.25';
-  String _term = '30';
-  String _propertyTax = '4,500';
-  String _insurance = '1,200';
-  String _pmi = '0';
-  bool _includeInPayment = true;
-  int _selectedPreset = 2; // 30yr default
-
   static const _modes = ['Basic', 'Advanced', 'Buy vs Rent'];
 
   @override
@@ -48,9 +40,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
+      body: BlocBuilder<CalculatorCubit, CalculatorState>(
+        builder: (context, state) {
+          final cubit = context.read<CalculatorCubit>();
+          final input = state.input;
+          final result = state.result;
+
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
           // Mode segmented control (Basic / Advanced / Buy vs Rent)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -66,8 +64,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: QuickPresetsBar(
-              selectedIndex: _selectedPreset,
-              onSelected: (i) => setState(() => _selectedPreset = i),
+              selectedIndex: state.selectedPreset,
+              onSelected: cubit.applyPreset,
             ),
           ),
           const SizedBox(height: 16),
@@ -75,25 +73,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           if (_modeIndex == 0 || _modeIndex == 1) ...[
             // Input form
             LoanInputForm(
-              homePrice: _homePrice,
-              downPayment: _downPayment,
-              loanAmount: _loanAmount,
-              rate: _rate,
-              term: _term,
-              propertyTax: _propertyTax,
-              insurance: _insurance,
-              pmi: _pmi,
-              includeInPayment: _includeInPayment,
-              onHomePriceChanged: (v) => setState(() => _homePrice = v),
-              onDownPaymentChanged: (v) => setState(() => _downPayment = v),
-              onLoanAmountChanged: (v) => setState(() => _loanAmount = v),
-              onRateChanged: (v) => setState(() => _rate = v),
-              onTermChanged: (v) => setState(() => _term = v),
-              onPropertyTaxChanged: (v) => setState(() => _propertyTax = v),
-              onInsuranceChanged: (v) => setState(() => _insurance = v),
-              onPmiChanged: (v) => setState(() => _pmi = v),
-              onIncludeInPaymentChanged: (v) =>
-                  setState(() => _includeInPayment = v),
+              homePrice: CurrencyFormatter.format(input.homePrice),
+              downPayment: CurrencyFormatter.format(input.downPayment),
+              loanAmount: CurrencyFormatter.format(input.loanAmount),
+              rate: input.annualRate.toString(),
+              term: input.termYears.toString(),
+              propertyTax: CurrencyFormatter.format(input.propertyTaxAnnual),
+              insurance: CurrencyFormatter.format(input.insuranceAnnual),
+              pmi: CurrencyFormatter.format(input.pmiAnnual),
+              includeInPayment: input.includeInPayment,
+              startDate: DateFormatter.longDate(input.startDate),
+              onHomePriceChanged: cubit.updateHomePrice,
+              onDownPaymentChanged: cubit.updateDownPayment,
+              onLoanAmountChanged: cubit.updateLoanAmount,
+              onRateChanged: cubit.updateRate,
+              onTermChanged: cubit.updateTerm,
+              onPropertyTaxChanged: cubit.updatePropertyTax,
+              onInsuranceChanged: cubit.updateInsurance,
+              onPmiChanged: cubit.updatePmi,
+              onIncludeInPaymentChanged: cubit.updateIncludeInPayment,
             ),
           ] else ...[
             // Buy vs Rent placeholder
@@ -122,15 +120,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ],
           const SizedBox(height: 16),
 
-          // Result hero card (at bottom, matching screenshot)
+          // Result hero card
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ResultCard(
-              monthlyPrincipalInterest: '\$2,043.71',
-              totalMonthly: '\$2,377.80',
-              totalInterest: '\$375,735',
-              totalCost: '\$735,735',
-              payoffDate: 'May 2056',
+              monthlyPrincipalInterest:
+                  CurrencyFormatter.formatWithCents(result.monthlyPI),
+              totalMonthly:
+                  CurrencyFormatter.formatWithCents(result.totalMonthly),
+              totalInterest: CurrencyFormatter.format(result.totalInterest),
+              totalCost: CurrencyFormatter.format(result.totalCost),
+              payoffDate: DateFormatter.payoffDate(result.payoffDate),
               onViewSchedule: () => context.go('/schedule'),
               onExtraPayment: () => context.push('/extra-payment'),
             ),
@@ -157,6 +157,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           const SizedBox(height: 16),
           const DisclaimerText(short: true),
         ],
+          );
+        },
       ),
     );
   }
@@ -250,8 +252,10 @@ class _ModeSegmentedControl extends StatelessWidget {
                     fontWeight:
                         selected ? FontWeight.w600 : FontWeight.w400,
                     color: selected
-                        ? AppColors.brand800
-                        : AppColors.neutral500,
+                        ? (isDark ? AppColors.white : AppColors.neutral900)
+                        : (isDark
+                            ? AppColors.neutral400
+                            : AppColors.neutral500),
                   ),
                 ),
               ),

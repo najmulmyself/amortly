@@ -3,42 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 
 /// Single-line balance chart for the Schedule screen's Chart tab.
-/// Shows remaining loan balance over 30 years for a $360k @ 6.25% 30-yr loan.
 class BalanceLineChart extends StatelessWidget {
-  const BalanceLineChart({super.key});
+  final List<FlSpot>? spots;
+  final double maxY;
 
-  // Pre-computed yearly balance snapshots in $k ($360k @ 6.25%, P&I only)
-  static const _spots = [
+  const BalanceLineChart({super.key, this.spots, this.maxY = 400});
+
+  static const _fallbackSpots = [
     FlSpot(0, 360),
-    FlSpot(1, 356),
-    FlSpot(2, 351),
-    FlSpot(3, 346),
-    FlSpot(4, 341),
     FlSpot(5, 336),
-    FlSpot(6, 330),
-    FlSpot(7, 324),
-    FlSpot(8, 318),
-    FlSpot(9, 311),
     FlSpot(10, 303),
-    FlSpot(11, 296),
-    FlSpot(12, 287),
-    FlSpot(13, 278),
-    FlSpot(14, 269),
     FlSpot(15, 259),
-    FlSpot(16, 248),
-    FlSpot(17, 237),
-    FlSpot(18, 225),
-    FlSpot(19, 212),
     FlSpot(20, 198),
-    FlSpot(21, 183),
-    FlSpot(22, 168),
-    FlSpot(23, 151),
-    FlSpot(24, 134),
     FlSpot(25, 115),
-    FlSpot(26, 95),
-    FlSpot(27, 74),
-    FlSpot(28, 52),
-    FlSpot(29, 28),
     FlSpot(30, 0),
   ];
 
@@ -51,6 +28,10 @@ class BalanceLineChart extends StatelessWidget {
       fontSize: 10,
       color: isDark ? AppColors.neutral400 : AppColors.neutral500,
     );
+    final chartSpots =
+        (spots != null && spots!.isNotEmpty) ? spots! : _fallbackSpots;
+    final maxX = chartSpots.last.x;
+    final chartMaxY = maxY;
 
     return Container(
       decoration: BoxDecoration(
@@ -67,9 +48,9 @@ class BalanceLineChart extends StatelessWidget {
         child: LineChart(
           LineChartData(
             minX: 0,
-            maxX: 30,
+            maxX: maxX,
             minY: 0,
-            maxY: 400,
+            maxY: chartMaxY,
             clipData: const FlClipData.all(),
             gridData: FlGridData(
               show: true,
@@ -112,7 +93,7 @@ class BalanceLineChart extends StatelessWidget {
             ),
             lineBarsData: [
               LineChartBarData(
-                spots: _spots,
+                spots: chartSpots,
                 color: AppColors.brand700,
                 barWidth: 2.5,
                 isCurved: true,

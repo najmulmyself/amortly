@@ -1,29 +1,84 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/disclaimer_text.dart';
 import '../../../core/widgets/section_label.dart';
+import '../../calculator/cubit/calculator_cubit.dart';
+import '../cubit/extra_payment_cubit.dart';
+import '../cubit/extra_payment_state.dart';
 import 'widgets/savings_summary_card.dart';
 import 'widgets/payment_slider.dart';
 import 'widgets/comparison_cards.dart';
 import 'widgets/balance_chart.dart';
 
-class ExtraPaymentScreen extends StatefulWidget {
+class ExtraPaymentScreen extends StatelessWidget {
   const ExtraPaymentScreen({super.key});
 
   @override
-  State<ExtraPaymentScreen> createState() => _ExtraPaymentScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (ctx) => ExtraPaymentCubit(ctx.read<CalculatorCubit>().state.input),
+      child: const _ExtraPaymentBody(),
+    );
+  }
 }
 
-class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
-  double _extraPayment = 200;
-  // 0 = Additional Principal, 1 = Recurring Extra
-  int _paymentType = 0;
+class _ExtraPaymentBody extends StatelessWidget {
+  const _ExtraPaymentBody();
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return BlocBuilder<ExtraPaymentCubit, ExtraPaymentState>(
+      builder: (context, state) {
+        final cubit = context.read<ExtraPaymentCubit>();
+        final result = state.result;
+
+        // Format time saved
+        final years = result.monthsSaved ~/ 12;
+        final months = result.monthsSaved % 12;
+        final savedLabel = [
+          if (years > 0) '$years ${years == 1 ? 'year' : 'years'}',
+          if (months > 0) '$months ${months == 1 ? 'month' : 'months'}',
+        ].join(' ');
+        final savedDisplay = savedLabel.isEmpty ? '0 months' : savedLabel;
+
+        final originalPayoff = DateTime(
+          state.input.startDate.year + state.input.termYears,
+          state.input.startDate.month,
+        );
+
+        // Monthly P&I base
+        final baseMonthly = state.result.originalTotalInterest == 0
+            ? CurrencyFormatter.formatWithCents(0)
+            : (() {
+                final n = state.input.termYears * 12;
+                final base = state.result.originalTotalInterest == 0
+                    ? 0.0
+                    : (state.result.originalTotalInterest +
+                            state.input.loanAmount) /
+                        n;
+                return CurrencyFormatter.formatWithCents(base);
+              })();
+
+        // Compute base payment for comparison cards
+        final int origMonths = state.result.originalMonths;
+        final double basePayment =
+            (state.result.originalTotalInterest + state.input.loanAmount) /
+                origMonths;
+        final newMonths = origMonths - result.monthsSaved;
+        final newYrs = newMonths ~/ 12;
+        final newMos = newMonths % 12;
+        final newTermLabel = newYrs > 0
+            ? '$newYrs yr${newMos > 0 ? ' $newMos mo' : ''}'
+            : '$newMos mo';
+        final origYrs = origMonths ~/ 12;
+        final origTermLabel = '$origYrs years';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -47,10 +102,10 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: SavingsSummaryCard(
-              interestSaved: '\$136,144',
-              yearsSaved: '6 years 2 months',
-              newPayoffDate: 'May 2033',
-              originalPayoffDate: 'May 2039',
+              interestSaved: CurrencyFormatter.format(result.interestSaved),
+              yearsSaved: savedDisplay,
+              newPayoffDate: DateFormatter.payoffDate(result.newPayoffDate),
+              originalPayoffDate: DateFormatter.payoffDate(originalPayoff),
             ),
           ),
           const SizedBox(height: 8),
@@ -72,7 +127,7 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
                   const Text('🎉', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   Text(
-                    "That's 74 fewer payments!",
+                    "That's ${result.monthsSaved} fewer payments!",
                     style: TextStyle(
                       fontFamily: 'DMSans',
                       fontSize: 14,
@@ -94,14 +149,14 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
               children: [
                 _InfoRow(
                   label: 'New Payoff Date',
-                  value: 'May 2033',
+                  value: DateFormatter.payoffDate(result.newPayoffDate),
                   isDark: isDark,
                 ),
                 Divider(height: 1, thickness: 0.5, color: isDark ? AppColors.darkBorder : AppColors.neutral200),
                 _InfoRow(
                   label: 'Total Interest',
-                  value: '\$112,806',
-                  subtitle: 'vs \$248,950 without extra payments',
+                  value: CurrencyFormatter.format(result.newTotalInterest),
+                  subtitle: 'vs ${CurrencyFormatter.format(result.originalTotalInterest)} without extra payments',
                   isDark: isDark,
                 ),
               ],
@@ -114,10 +169,10 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: PaymentSlider(
-              value: _extraPayment,
+              value: state.extraMonthly,
               min: 0,
               max: 2000,
-              onChanged: (v) => setState(() => _extraPayment = v),
+              onChanged: cubit.setExtra,
             ),
           ),
           const SizedBox(height: 20),
@@ -128,8 +183,8 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _PaymentTypeSelector(
               isDark: isDark,
-              selected: _paymentType,
-              onChanged: (i) => setState(() => _paymentType = i),
+              selected: state.paymentType,
+              onChanged: cubit.setPaymentType,
             ),
           ),
           const SizedBox(height: 20),
@@ -149,12 +204,12 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ComparisonCards(
-              originalMonthly: '\$2,577.80',
-              newMonthly: '\$2,577.80',
-              originalTerm: '30 years',
-              newTerm: '23 yr 10 mo',
-              originalInterest: '\$248,950',
-              newInterest: '\$112,806',
+              originalMonthly: CurrencyFormatter.formatWithCents(basePayment),
+              newMonthly: CurrencyFormatter.formatWithCents(basePayment + state.extraMonthly),
+              originalTerm: origTermLabel,
+              newTerm: newTermLabel,
+              originalInterest: CurrencyFormatter.format(result.originalTotalInterest),
+              newInterest: CurrencyFormatter.format(result.newTotalInterest),
             ),
           ),
           const SizedBox(height: 20),
@@ -162,12 +217,17 @@ class _ExtraPaymentScreenState extends State<ExtraPaymentScreen> {
           const SectionLabel(text: 'Balance Over Time'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: BalanceChart(extraPayment: _extraPayment),
+            child: BalanceChart(
+              extraPayment: state.extraMonthly,
+              input: state.input,
+            ),
           ),
           const SizedBox(height: 16),
           const DisclaimerText(short: true),
         ],
       ),
+    );
+      },
     );
   }
 }

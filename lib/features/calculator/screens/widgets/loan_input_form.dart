@@ -15,6 +15,7 @@ class LoanInputForm extends StatelessWidget {
   final String insurance;
   final String pmi;
   final bool includeInPayment;
+  final String startDate;
   final ValueChanged<String>? onHomePriceChanged;
   final ValueChanged<String>? onDownPaymentChanged;
   final ValueChanged<String>? onLoanAmountChanged;
@@ -36,6 +37,7 @@ class LoanInputForm extends StatelessWidget {
     required this.insurance,
     required this.pmi,
     required this.includeInPayment,
+    this.startDate = 'May 12, 2025',
     this.onHomePriceChanged,
     this.onDownPaymentChanged,
     this.onLoanAmountChanged,
@@ -129,7 +131,7 @@ class LoanInputForm extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 child: Text(
-                  'May 12, 2025',
+                  startDate,
                   style: TextStyle(
                     fontFamily: 'DMSans',
                     fontSize: 15,

@@ -1,28 +1,36 @@
+import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../features/calculator/models/mortgage_input.dart';
 
 class BalanceChart extends StatelessWidget {
   final double extraPayment;
+  final MortgageInput? input;
 
-  const BalanceChart({super.key, required this.extraPayment});
-
-  // $360k @ 6.25% 30-yr, P&I only
-  static const double _principal = 360000;
-  static const double _monthlyRate = 0.0625 / 12;
-  static const double _basePayment = 2216.52;
+  const BalanceChart({super.key, required this.extraPayment, this.input});
 
   /// Builds yearly balance spots (x = year, y = balance in $k).
   List<FlSpot> _buildSpots(double extra) {
-    final payment = _basePayment + extra;
-    final spots = <FlSpot>[];
-    double bal = _principal;
+    final loan = input;
+    final double principal = loan?.loanAmount ?? 360000;
+    final double annualRate = loan?.annualRate ?? 6.25;
+    final int termYears = loan?.termYears ?? 30;
+    final double monthlyRate = annualRate / 100 / 12;
+    final int n = termYears * 12;
+    final double factor = pow(1 + monthlyRate, n).toDouble();
+    final double basePayment = principal * monthlyRate * factor / (factor - 1);
+    final double maxY = (principal / 1000 / 100).ceil() * 100;
 
-    for (int yr = 0; yr <= 30; yr++) {
-      spots.add(FlSpot(yr.toDouble(), (bal / 1000).clamp(0.0, 400.0)));
+    final payment = basePayment + extra;
+    final spots = <FlSpot>[];
+    double bal = principal;
+
+    for (int yr = 0; yr <= termYears; yr++) {
+      spots.add(FlSpot(yr.toDouble(), (bal / 1000).clamp(0.0, maxY)));
       if (bal == 0) break;
       for (int m = 0; m < 12; m++) {
-        bal -= payment - bal * _monthlyRate;
+        bal -= payment - bal * monthlyRate;
         if (bal < 0) {
           bal = 0;
           break;
@@ -37,6 +45,11 @@ class BalanceChart extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final withoutExtra = _buildSpots(0);
     final withExtra = _buildSpots(extraPayment);
+
+    final double maxX = (input?.termYears ?? 30).toDouble();
+    final double maxY =
+        (((input?.loanAmount ?? 360000) / 1000 / 100).ceil() * 100).toDouble();
+    final double gridInterval = maxY / 4;
 
     final gridColor = isDark ? AppColors.neutral700 : AppColors.neutral200;
     final labelStyle = TextStyle(
@@ -64,14 +77,14 @@ class BalanceChart extends StatelessWidget {
             child: LineChart(
               LineChartData(
                 minX: 0,
-                maxX: 30,
+                maxX: maxX,
                 minY: 0,
-                maxY: 400,
+                maxY: maxY,
                 clipData: const FlClipData.all(),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 100,
+                  horizontalInterval: gridInterval,
                   getDrawingHorizontalLine: (_) =>
                       FlLine(color: gridColor, strokeWidth: 0.5),
                 ),
@@ -85,9 +98,10 @@ class BalanceChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 46,
-                      interval: 100,
+                      interval: gridInterval,
                       getTitlesWidget: (v, _) {
-                        if (v % 100 != 0) return const SizedBox.shrink();
+                        if (v % gridInterval != 0)
+                          return const SizedBox.shrink();
                         return Text('\$${v.toInt()}k', style: labelStyle);
                       },
                     ),
@@ -96,9 +110,14 @@ class BalanceChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 24,
-                      interval: 5,
+                      interval: maxX <= 20
+                          ? 5
+                          : maxX <= 30
+                              ? 5
+                              : 10,
                       getTitlesWidget: (v, _) {
-                        if (v % 5 != 0) return const SizedBox.shrink();
+                        final interval = maxX <= 20 ? 5 : 5;
+                        if (v % interval != 0) return const SizedBox.shrink();
                         return Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text('Yr ${v.toInt()}', style: labelStyle),
