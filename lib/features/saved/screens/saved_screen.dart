@@ -142,10 +142,16 @@ class _SavedScreenState extends State<SavedScreen> {
             ],
           ),
           // Add New Loan button + optional banner
-          bottomNavigationBar: Column(
+          bottomNavigationBar: ListenableBuilder(
+            listenable: PurchaseService(),
+            builder: (context, _) {
+              final showBanner = !PurchaseService().isPro &&
+                  _bannerAdLoaded &&
+                  _bannerAd != null;
+              return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_bannerAdLoaded && _bannerAd != null)
+              if (showBanner)
                 SizedBox(
                   width: _bannerAd!.size.width.toDouble(),
                   height: _bannerAd!.size.height.toDouble(),
@@ -179,6 +185,8 @@ class _SavedScreenState extends State<SavedScreen> {
                 ),
               ),
             ],
+          );
+            },
           ),
         );
       },

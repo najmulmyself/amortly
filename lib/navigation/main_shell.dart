@@ -9,11 +9,26 @@ class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(path: '/',          icon: 'assets/icons/calculator.png', label: AppStrings.tabCalculator),
-    _TabItem(path: '/schedule',  icon: 'assets/icons/calendar.png',   label: AppStrings.tabSchedule),
-    _TabItem(path: '/compare',   icon: 'assets/icons/compare.png',    label: AppStrings.tabCompare),
-    _TabItem(path: '/saved',     icon: 'assets/icons/saved.png',      label: AppStrings.tabSaved),
-    _TabItem(path: '/settings',  icon: 'assets/icons/settings.png',   label: AppStrings.tabSettings),
+    _TabItem(
+        path: '/',
+        icon: 'assets/icons/calculator.png',
+        label: AppStrings.tabCalculator),
+    _TabItem(
+        path: '/schedule',
+        icon: 'assets/icons/calendar.png',
+        label: AppStrings.tabSchedule),
+    _TabItem(
+        path: '/compare-ab',
+        icon: 'assets/icons/compare.png',
+        label: AppStrings.tabCompare),
+    _TabItem(
+        path: '/saved',
+        icon: 'assets/icons/saved.png',
+        label: AppStrings.tabSaved),
+    _TabItem(
+        path: '/settings',
+        icon: 'assets/icons/settings.png',
+        label: AppStrings.tabSettings),
   ];
 
   int _locationToIndex(String location) {
@@ -49,26 +64,22 @@ class MainShell extends StatelessWidget {
             onTap: (index) => context.go(_tabs[index].path),
             backgroundColor: Colors.transparent,
             elevation: 0,
-            items: _tabs
-                .asMap()
-                .entries
-                .map((e) {
-                  final selected = e.key == currentIndex;
-                  final color = selected
-                      ? AppColors.brand700
-                      : (isDark ? AppColors.neutral400 : AppColors.neutral500);
-                  final iconWidget = Image.asset(
-                    e.value.icon,
-                    width: 24,
-                    height: 24,
-                    color: color,
-                  );
-                  return BottomNavigationBarItem(
-                    icon: iconWidget,
-                    label: e.value.label,
-                  );
-                })
-                .toList(),
+            items: _tabs.asMap().entries.map((e) {
+              final selected = e.key == currentIndex;
+              final color = selected
+                  ? AppColors.brand700
+                  : (isDark ? AppColors.neutral400 : AppColors.neutral500);
+              final iconWidget = Image.asset(
+                e.value.icon,
+                width: 24,
+                height: 24,
+                color: color,
+              );
+              return BottomNavigationBarItem(
+                icon: iconWidget,
+                label: e.value.label,
+              );
+            }).toList(),
           ),
         ),
       ),

@@ -23,12 +23,10 @@ class CalculatorScreen extends StatefulWidget {
 class _CalculatorScreenState extends State<CalculatorScreen> {
   // UI-only state (not business logic)
   int _modeIndex = 0;
-  static const _modes = ['Basic', 'Advanced', 'Buy vs Rent'];
+  static const _modes = ['Basic', 'Advanced'];
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -92,30 +90,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               onInsuranceChanged: cubit.updateInsurance,
               onPmiChanged: cubit.updatePmi,
               onIncludeInPaymentChanged: cubit.updateIncludeInPayment,
-            ),
-          ] else ...[
-            // Buy vs Rent placeholder
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.neutral200,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Buy vs Rent — Coming Soon',
-                  style: TextStyle(
-                    fontFamily: 'DMSans',
-                    fontSize: 15,
-                    color: AppColors.neutral500,
-                  ),
-                ),
-              ),
             ),
           ],
           const SizedBox(height: 16),

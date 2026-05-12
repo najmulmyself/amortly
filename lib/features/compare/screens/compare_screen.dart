@@ -49,9 +49,11 @@ class _CompareBody extends StatelessWidget {
         final loan1Interest =
             CurrencyFormatter.format(result.originalTotalInterest);
         final origMonths = result.originalMonths;
+        // Proper month arithmetic — avoid DateTime(y, month+n) fragility
         final origPayoff = DateTime(
-          state.input.startDate.year,
-          state.input.startDate.month + origMonths,
+          state.input.startDate.year +
+              (state.input.startDate.month - 1 + origMonths) ~/ 12,
+          (state.input.startDate.month - 1 + origMonths) % 12 + 1,
         );
 
         // Loan B (with extra)

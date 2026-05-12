@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../services/ad_service.dart';
 import '../models/mortgage_input.dart';
 import '../services/mortgage_calculator.dart';
 import 'calculator_state.dart';
@@ -116,7 +117,13 @@ class CalculatorCubit extends Cubit<CalculatorState> {
     ));
   }
 
+  int _updateCount = 0;
+
   void _update(MortgageInput input) {
+    _updateCount++;
+    if (_updateCount % 3 == 0) {
+      AdService().showInterstitial();
+    }
     emit(state.copyWith(
       input: input,
       result: MortgageCalculator.calculate(input),

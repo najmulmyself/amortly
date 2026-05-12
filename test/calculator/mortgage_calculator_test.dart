@@ -39,10 +39,11 @@ void main() {
       expect(years, closeTo(30, 0.5));
     });
 
-    test('0% rate: returns 0 (edge case handled)', () {
+    test('0% rate: returns principal / n (no interest)', () {
       final zeroInput = input.copyWith(annualRate: 0);
       final result = MortgageCalculator.calculate(zeroInput);
-      expect(result.monthlyPI, equals(0.0));
+      // $360,000 / (30 * 12) = $833.33
+      expect(result.monthlyPI, closeTo(833.33, 1.0));
     });
   });
 

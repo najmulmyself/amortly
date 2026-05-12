@@ -43,7 +43,9 @@ class MortgageCalculator {
 
   /// Compute monthly P&I payment for a loan.
   static double _monthlyPI(double principal, double annualRate, int n) {
-    if (principal <= 0 || annualRate <= 0 || n <= 0) return 0;
+    if (principal <= 0 || n <= 0) return 0;
+    if (annualRate == 0)
+      return principal / n; // 0% interest: equal principal payments
     final r = annualRate / 100 / 12;
     final factor = pow(1 + r, n).toDouble();
     return principal * r * factor / (factor - 1);

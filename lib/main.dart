@@ -33,18 +33,22 @@ Future<void> main() async {
   // 4. AdMob (after ATT)
   await AdService().initialize();
 
+  // 5. Cache onboarding flag once — avoids async SharedPrefs on every route change
+  final onboardingDone = await StorageService().isOnboardingComplete();
+
   final prefs = await SharedPreferences.getInstance();
   final savedDark = prefs.getBool('dark_mode');
   final initialTheme = savedDark == null
       ? ThemeMode.system
       : (savedDark ? ThemeMode.dark : ThemeMode.light);
 
-  runApp(AmortlyApp(initialTheme: initialTheme));
+  runApp(AmortlyApp(initialTheme: initialTheme, onboardingDone: onboardingDone));
 }
 
 class AmortlyApp extends StatelessWidget {
   final ThemeMode initialTheme;
-  const AmortlyApp({super.key, required this.initialTheme});
+  final bool onboardingDone;
+  const AmortlyApp({super.key, required this.initialTheme, required this.onboardingDone});
 
   @override
   Widget build(BuildContext context) {
@@ -54,16 +58,21 @@ class AmortlyApp extends StatelessWidget {
         BlocProvider(create: (_) => CalculatorCubit()),
         BlocProvider(create: (_) => SavedCubit()),
       ],
-      child: BlocBuilder<AppThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          return MaterialApp.router(
-            title: 'Amortly',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: themeMode,
-            routerConfig: appRouter,
-            scrollBehavior: const _IOSScrollBehavior(),
+      child: ListenableBuilder(
+        listenable: PurchaseService(),
+        builder: (context, _) {
+          return BlocBuilder<AppThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              return MaterialApp.router(
+                title: 'Amortly',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                darkTheme: AppTheme.dark,
+                themeMode: themeMode,
+                routerConfig: buildAppRouter(onboardingDone),
+                scrollBehavior: const _IOSScrollBehavior(),
+              );
+            },
           );
         },
       ),

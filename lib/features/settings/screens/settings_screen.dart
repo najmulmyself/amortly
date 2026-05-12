@@ -17,9 +17,22 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ListenableBuilder(
+      listenable: PurchaseService(),
+      builder: (context, _) => _SettingsBody(context: context),
+    );
+  }
+}
+
+class _SettingsBody extends StatelessWidget {
+  final BuildContext context;
+  const _SettingsBody({required this.context});
+
+  @override
+  Widget build(BuildContext outerContext) {
+    final isDark = Theme.of(outerContext).brightness == Brightness.dark;
     final isPro = PurchaseService().isPro;
-    final themeMode = context.watch<AppThemeCubit>().state;
+    final themeMode = outerContext.watch<AppThemeCubit>().state;
     final themeLabel = themeMode == ThemeMode.dark
         ? 'Dark'
         : themeMode == ThemeMode.light
@@ -27,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
             : 'System';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(outerContext).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(AppStrings.tabSettings),
       ),
@@ -66,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
                 label: 'Theme',
                 trailingValue: themeLabel,
                 isDark: isDark,
-                onTap: () => _showThemePicker(context),
+                onTap: () => _showThemePicker(outerContext),
               ),
               SettingsRow(
                 icon: CupertinoIcons.clock,
@@ -134,7 +147,7 @@ class SettingsScreen extends StatelessWidget {
                 label: 'Share Amortly',
                 isDark: isDark,
                 onTap: () {
-                  final box = context.findRenderObject() as RenderBox?;
+                  final box = outerContext.findRenderObject() as RenderBox?;
                   final origin = box == null
                       ? null
                       : box.localToGlobal(Offset.zero) & box.size;
